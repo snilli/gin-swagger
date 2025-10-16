@@ -1,0 +1,11 @@
+all: true
+dir: mock
+filename: '{{.InterfaceName}}.go'
+formatter: goimports
+log-level: info
+inpackage: false
+recursive: true
+packages:
+  meek/internal/port:
+    config:
+      recursive: true
