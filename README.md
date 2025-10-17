@@ -1,18 +1,22 @@
 # Meek API
 
-A simple REST API built with Gin and Swagger.
+A production-ready REST API template built with Go, following Clean Architecture and Hexagonal Architecture patterns.
 
 ## Features
 
+- Clean Architecture (Hexagonal/Ports & Adapters pattern)
 - Gin web framework
+- BDD testing with Ginkgo v2 and Gomega
+- Automated mock generation with Mockery
 - Swagger/OpenAPI documentation
 - RESTful API design
+- Comprehensive test coverage
 - Example CRUD operations for users
 
 ## Prerequisites
 
 - Go 1.21 or higher
-- Make (optional)
+- Make (optional but recommended)
 
 ## Installation
 
@@ -24,8 +28,16 @@ cd meek
 # Install dependencies
 go mod download
 
-# Install swag CLI (for Swagger generation)
+# Install required tools
 go install github.com/swaggo/swag/cmd/swag@latest
+go install github.com/onsi/ginkgo/v2/ginkgo@latest
+go install github.com/vektra/mockery/v2@latest
+
+# Generate mocks
+make mock
+
+# Generate Swagger documentation
+make swagger
 ```
 
 ## Running the Application
@@ -56,14 +68,30 @@ swag init
 go run main.go
 ```
 
-The server will start on `http://localhost:8080`
+The server will start on `http://localhost:8081`
+
+## Testing
+
+```bash
+# Run tests with Ginkgo (recommended)
+make ginkgo
+
+# Or run Ginkgo directly
+ginkgo run --randomize-all --race --cover -r
+
+# Watch mode for continuous testing
+make ginkgo-watch
+
+# Or use standard go test
+make test
+```
 
 ## API Documentation
 
 Once the server is running, you can access:
 
-- **Swagger UI**: http://localhost:8080/swagger/index.html
-- **Health Check**: http://localhost:8080/health
+- **Swagger UI**: http://localhost:8081/swagger/index.html
+- **Health Check**: http://localhost:8081/health
 
 ## API Endpoints
 
@@ -81,7 +109,7 @@ Once the server is running, you can access:
 
 ### Create a user
 ```bash
-curl -X POST http://localhost:8080/api/v1/users \
+curl -X POST http://localhost:8081/api/v1/users \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
@@ -91,17 +119,17 @@ curl -X POST http://localhost:8080/api/v1/users \
 
 ### Get all users
 ```bash
-curl http://localhost:8080/api/v1/users
+curl http://localhost:8081/api/v1/users
 ```
 
 ### Get user by ID
 ```bash
-curl http://localhost:8080/api/v1/users/1
+curl http://localhost:8081/api/v1/users/1
 ```
 
 ### Update a user
 ```bash
-curl -X PUT http://localhost:8080/api/v1/users/1 \
+curl -X PUT http://localhost:8081/api/v1/users/1 \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Jane Doe",
@@ -111,7 +139,7 @@ curl -X PUT http://localhost:8080/api/v1/users/1 \
 
 ### Delete a user
 ```bash
-curl -X DELETE http://localhost:8080/api/v1/users/1
+curl -X DELETE http://localhost:8081/api/v1/users/1
 ```
 
 ## Project Structure
@@ -121,15 +149,21 @@ curl -X DELETE http://localhost:8080/api/v1/users/1
 ├── cmd/
 │   └── main.go              # Application entry point
 ├── internal/
-│   ├── domain/              # Domain models (pure business logic)
+│   ├── domain/              # Domain entities (pure business logic, NO tags)
 │   │   └── user.go
-│   └── handler/             # HTTP handlers
+│   ├── port/                # Port interfaces (contracts)
+│   │   └── service/         # Service interfaces
+│   ├── service/             # Service implementations (business logic)
+│   │   └── usersvc/
+│   └── handler/             # HTTP handlers (adapters)
 │       ├── health.go
-│       └── user.go
+│       └── userhdl/
+├── mock/                    # Generated mocks
 ├── docs/                    # Generated Swagger documentation
 ├── go.mod                   # Go module dependencies
 ├── go.sum                   # Dependency checksums
 ├── Makefile                 # Build and run commands
+├── CLAUDE.md                # Complete project documentation
 └── README.md                # This file
 ```
 
@@ -160,6 +194,18 @@ func getUsers(c *gin.Context) {
     // handler code
 }
 ```
+
+## Documentation
+
+For complete project documentation, architecture details, testing guidelines, and development best practices, see [CLAUDE.md](CLAUDE.md).
+
+Key topics covered:
+- Architecture & Design patterns
+- Complete project history
+- Testing strategy with Ginkgo/Gomega
+- Development workflow
+- Design decisions and rationale
+- Best practices and conventions
 
 ## License
 

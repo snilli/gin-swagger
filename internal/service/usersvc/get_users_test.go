@@ -1,25 +1,48 @@
-package usersvc
+package usersvc_test
 
 import (
 	"context"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
-	"meek/internal/domain"
+	portusersvc "meek/internal/port/service/usersvc"
+	"meek/internal/service/usersvc"
 )
 
-func TestService_GetUsers(t *testing.T) {
-	ctx := context.Background()
-	service := New()
+var _ = Describe("UserService GetUsers", func() {
+	var (
+		service portusersvc.Service
+		ctx     context.Context
+	)
 
-	expected := []domain.User{
-		{ID: "1", Name: "John Doe", Email: "john@example.com"},
-		{ID: "2", Name: "Jane Smith", Email: "jane@example.com"},
-	}
+	BeforeEach(func() {
+		service = usersvc.New()
+		ctx = context.Background()
+	})
 
-	users, err := service.GetUsers(ctx)
+	Describe("GetUsers", func() {
+		Context("when retrieving all users", func() {
+			It("should return list of users successfully", func() {
+				users, err := service.GetUsers(ctx)
 
-	assert.NoError(t, err)
-	assert.Equal(t, expected, users)
-}
+				Expect(err).ToNot(HaveOccurred())
+				Expect(users).ToNot(BeNil())
+				Expect(users).To(HaveLen(2))
+			})
+
+			It("should return users with correct data", func() {
+				users, err := service.GetUsers(ctx)
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(users[0].ID).To(Equal("1"))
+				Expect(users[0].Name).To(Equal("John Doe"))
+				Expect(users[0].Email).To(Equal("john@example.com"))
+
+				Expect(users[1].ID).To(Equal("2"))
+				Expect(users[1].Name).To(Equal("Jane Smith"))
+				Expect(users[1].Email).To(Equal("jane@example.com"))
+			})
+		})
+	})
+})

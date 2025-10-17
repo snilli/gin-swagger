@@ -1,4 +1,4 @@
-package userhdl
+package userhdl_test
 
 import (
 	"bytes"
@@ -7,95 +7,103 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"meek/internal/domain"
+	"meek/internal/handler/userhdl"
 	"meek/mock/mockservice"
 )
 
-func TestHandler_CreateUser(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	ctx := context.Background()
+var _ = Describe("Handler CreateUser", func() {
+	var (
+		mockService *mockservice.MockService
+		handler     *userhdl.Handler
+		ctx         context.Context
+	)
 
-	tests := []struct {
-		name     string
-		body     any
-		mockFn   func(*mockservice.MockService)
-		assertFn func(*testing.T, *httptest.ResponseRecorder)
-	}{
-		{
-			name: "success - creates user",
-			body: CreateUserRequest{
-				Name:  "John Doe",
-				Email: "john@example.com",
-			},
-			mockFn: func(m *mockservice.MockService) {
+	BeforeEach(func() {
+		gin.SetMode(gin.TestMode)
+		mockService = mockservice.NewMockService(GinkgoT())
+		handler = userhdl.NewHandler(mockService)
+		ctx = context.Background()
+	})
+
+	Describe("CreateUser", func() {
+		Context("when creating a user with valid data", func() {
+			It("should create user successfully", func() {
+				req := userhdl.CreateUserRequest{
+					Name:  "John Doe",
+					Email: "john@example.com",
+				}
 				user := &domain.User{ID: "1", Name: "John Doe", Email: "john@example.com"}
-				m.EXPECT().CreateUser(ctx, "John Doe", "john@example.com").Return(user, nil)
-			},
-			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
-				assert.Equal(t, http.StatusCreated, w.Code)
+				mockService.EXPECT().CreateUser(ctx, "John Doe", "john@example.com").Return(user, nil)
 
-				var response UserResponse
+				bodyBytes, _ := json.Marshal(req)
+				w := httptest.NewRecorder()
+				c, _ := gin.CreateTestContext(w)
+				c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(bodyBytes))
+				c.Request.Header.Set("Content-Type", "application/json")
+				c.Request = c.Request.WithContext(ctx)
+
+				handler.CreateUser(c)
+
+				Expect(w.Code).To(Equal(http.StatusCreated))
+
+				var response userhdl.UserResponse
 				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Equal(t, "1", response.ID)
-				assert.Equal(t, "John Doe", response.Name)
-			},
-		},
-		{
-			name: "error - invalid request body",
-			body: map[string]any{
-				"name": "John Doe",
-				// missing email
-			},
-			mockFn: func(m *mockservice.MockService) {
-				// No mock expectations as validation fails before service call
-			},
-			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
-				assert.Equal(t, http.StatusBadRequest, w.Code)
-			},
-		},
-		{
-			name: "error - service returns error",
-			body: CreateUserRequest{
-				Name:  "John Doe",
-				Email: "john@example.com",
-			},
-			mockFn: func(m *mockservice.MockService) {
-				m.EXPECT().CreateUser(ctx, "John Doe", "john@example.com").Return(nil, errors.New("database error"))
-			},
-			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
-				assert.Equal(t, http.StatusInternalServerError, w.Code)
-
-				var response ErrorResponse
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Equal(t, "database error", response.Error)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := mockservice.NewMockService(t)
-			tt.mockFn(mockService)
-
-			handler := NewHandler(mockService)
-
-			bodyBytes, _ := json.Marshal(tt.body)
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(bodyBytes))
-			c.Request.Header.Set("Content-Type", "application/json")
-			c.Request = c.Request.WithContext(ctx)
-
-			handler.CreateUser(c)
-
-			tt.assertFn(t, w)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(response.ID).To(Equal("1"))
+				Expect(response.Name).To(Equal("John Doe"))
+			})
 		})
-	}
-}
+
+		Context("when request body is invalid", func() {
+			It("should return bad request error", func() {
+				invalidReq := map[string]any{
+					"name": "John Doe",
+					// missing email
+				}
+
+				bodyBytes, _ := json.Marshal(invalidReq)
+				w := httptest.NewRecorder()
+				c, _ := gin.CreateTestContext(w)
+				c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(bodyBytes))
+				c.Request.Header.Set("Content-Type", "application/json")
+				c.Request = c.Request.WithContext(ctx)
+
+				handler.CreateUser(c)
+
+				Expect(w.Code).To(Equal(http.StatusBadRequest))
+			})
+		})
+
+		Context("when service returns error", func() {
+			It("should return internal server error", func() {
+				req := userhdl.CreateUserRequest{
+					Name:  "John Doe",
+					Email: "john@example.com",
+				}
+				mockService.EXPECT().CreateUser(ctx, "John Doe", "john@example.com").Return(nil, errors.New("database error"))
+
+				bodyBytes, _ := json.Marshal(req)
+				w := httptest.NewRecorder()
+				c, _ := gin.CreateTestContext(w)
+				c.Request = httptest.NewRequest(http.MethodPost, "/api/v1/users", bytes.NewBuffer(bodyBytes))
+				c.Request.Header.Set("Content-Type", "application/json")
+				c.Request = c.Request.WithContext(ctx)
+
+				handler.CreateUser(c)
+
+				Expect(w.Code).To(Equal(http.StatusInternalServerError))
+
+				var response userhdl.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &response)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(response.Error).To(Equal("database error"))
+			})
+		})
+	})
+})

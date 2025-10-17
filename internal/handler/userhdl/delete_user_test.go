@@ -1,4 +1,4 @@
-package userhdl
+package userhdl_test
 
 import (
 	"context"
@@ -6,65 +6,67 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
-	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
+	"meek/internal/handler/userhdl"
 	"meek/mock/mockservice"
 )
 
-func TestHandler_DeleteUser(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	ctx := context.Background()
-	userID := "123"
+var _ = Describe("Handler DeleteUser", func() {
+	var (
+		mockService *mockservice.MockService
+		handler     *userhdl.Handler
+		ctx         context.Context
+		userID      string
+	)
 
-	tests := []struct {
-		name     string
-		mockFn   func(*mockservice.MockService)
-		assertFn func(*testing.T, *httptest.ResponseRecorder)
-	}{
-		{
-			name: "success - deletes user",
-			mockFn: func(m *mockservice.MockService) {
-				m.EXPECT().DeleteUser(ctx, userID).Return(nil)
-			},
-			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
-				assert.Equal(t, http.StatusNoContent, w.Code)
-			},
-		},
-		{
-			name: "error - service returns error",
-			mockFn: func(m *mockservice.MockService) {
-				m.EXPECT().DeleteUser(ctx, userID).Return(errors.New("delete failed"))
-			},
-			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
-				assert.Equal(t, http.StatusInternalServerError, w.Code)
+	BeforeEach(func() {
+		gin.SetMode(gin.TestMode)
+		mockService = mockservice.NewMockService(GinkgoT())
+		handler = userhdl.NewHandler(mockService)
+		ctx = context.Background()
+		userID = "123"
+	})
 
-				var response ErrorResponse
-				err := json.Unmarshal(w.Body.Bytes(), &response)
-				assert.NoError(t, err)
-				assert.Equal(t, "delete failed", response.Error)
-			},
-		},
-	}
+	Describe("DeleteUser", func() {
+		Context("when deleting an existing user", func() {
+			It("should delete user successfully", func() {
+				mockService.EXPECT().DeleteUser(ctx, userID).Return(nil)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mockService := mockservice.NewMockService(t)
-			tt.mockFn(mockService)
+				w := httptest.NewRecorder()
+				c, _ := gin.CreateTestContext(w)
+				c.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/users/"+userID, nil)
+				c.Request = c.Request.WithContext(ctx)
+				c.Params = gin.Params{{Key: "id", Value: userID}}
 
-			handler := NewHandler(mockService)
+				handler.DeleteUser(c)
 
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			c.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/users/"+userID, nil)
-			c.Request = c.Request.WithContext(ctx)
-			c.Params = gin.Params{{Key: "id", Value: userID}}
-
-			handler.DeleteUser(c)
-
-			tt.assertFn(t, w)
+				Expect(w.Code).To(Equal(http.StatusNoContent))
+			})
 		})
-	}
-}
+
+		Context("when service returns error", func() {
+			It("should return internal server error", func() {
+				mockService.EXPECT().DeleteUser(ctx, userID).Return(errors.New("delete failed"))
+
+				w := httptest.NewRecorder()
+				c, _ := gin.CreateTestContext(w)
+				c.Request = httptest.NewRequest(http.MethodDelete, "/api/v1/users/"+userID, nil)
+				c.Request = c.Request.WithContext(ctx)
+				c.Params = gin.Params{{Key: "id", Value: userID}}
+
+				handler.DeleteUser(c)
+
+				Expect(w.Code).To(Equal(http.StatusInternalServerError))
+
+				var response userhdl.ErrorResponse
+				err := json.Unmarshal(w.Body.Bytes(), &response)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(response.Error).To(Equal("delete failed"))
+			})
+		})
+	})
+})

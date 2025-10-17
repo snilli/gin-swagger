@@ -1,27 +1,50 @@
-package usersvc
+package usersvc_test
 
 import (
 	"context"
-	"testing"
 
-	"github.com/stretchr/testify/assert"
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
 
 	"meek/internal/domain"
+	portusersvc "meek/internal/port/service/usersvc"
+	"meek/internal/service/usersvc"
 )
 
-func TestService_UpdateUser(t *testing.T) {
-	ctx := context.Background()
-	service := New()
-	userID := "123"
+var _ = Describe("UserService UpdateUser", func() {
+	var (
+		service portusersvc.Service
+		ctx     context.Context
+	)
 
-	expected := &domain.User{
-		ID:    userID,
-		Name:  "Jane Updated",
-		Email: "jane.updated@example.com",
-	}
+	BeforeEach(func() {
+		service = usersvc.New()
+		ctx = context.Background()
+	})
 
-	user, err := service.UpdateUser(ctx, userID, "Jane Updated", "jane.updated@example.com")
+	Describe("UpdateUser", func() {
+		Context("when updating an existing user", func() {
+			It("should update user successfully", func() {
+				userID := "123"
 
-	assert.NoError(t, err)
-	assert.Equal(t, expected, user)
-}
+				user, err := service.UpdateUser(ctx, userID, "Jane Updated", "jane.updated@example.com")
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(user).ToNot(BeNil())
+				Expect(user.ID).To(Equal(userID))
+				Expect(user.Name).To(Equal("Jane Updated"))
+				Expect(user.Email).To(Equal("jane.updated@example.com"))
+			})
+
+			It("should return updated user with correct structure", func() {
+				userID := "123"
+
+				user, err := service.UpdateUser(ctx, userID, "New Name", "new@example.com")
+
+				Expect(err).ToNot(HaveOccurred())
+				Expect(user).To(BeAssignableToTypeOf(&domain.User{}))
+				Expect(user.ID).To(Equal(userID))
+			})
+		})
+	})
+})

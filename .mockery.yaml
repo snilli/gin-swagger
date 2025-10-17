@@ -1,16 +1,14 @@
+all: true
+recursive: true
 packages:
   meek/internal/port/service:
     config:
-      all: true
-      recursive: true
       dir: "mock/mockservice"
       pkgname: "mockservice"
       filename: "{{.InterfaceName | lower}}.go"
 
   meek/internal/port/repository:
     config:
-      all: true
-      recursive: true
       dir: "mock/mockrepository"
       pkgname: "mockrepository"
       filename: "{{.InterfaceName | lower}}.go"
