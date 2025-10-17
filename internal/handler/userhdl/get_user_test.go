@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"meek/internal/domain"
-	"meek/mock/usersvc"
+	"meek/mock/mockservice"
 )
 
 func TestHandler_GetUser(t *testing.T) {
@@ -22,14 +22,14 @@ func TestHandler_GetUser(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		mockFn   func(*usersvc.MockService)
+		mockFn   func(*mockservice.MockService)
 		assertFn func(*testing.T, *httptest.ResponseRecorder)
 	}{
 		{
 			name: "success - returns user",
-			mockFn: func(m *usersvc.MockService) {
+			mockFn: func(m *mockservice.MockService) {
 				user := &domain.User{ID: userID, Name: "John Doe", Email: "john@example.com"}
-				m.On("GetUser", ctx, userID).Return(user, nil)
+				m.EXPECT().GetUser(ctx, userID).Return(user, nil)
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, w.Code)
@@ -43,8 +43,8 @@ func TestHandler_GetUser(t *testing.T) {
 		},
 		{
 			name: "error - service returns error",
-			mockFn: func(m *usersvc.MockService) {
-				m.On("GetUser", ctx, userID).Return(nil, errors.New("user not found"))
+			mockFn: func(m *mockservice.MockService) {
+				m.EXPECT().GetUser(ctx, userID).Return(nil, errors.New("user not found"))
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusInternalServerError, w.Code)
@@ -59,7 +59,7 @@ func TestHandler_GetUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := usersvc.NewMockService(t)
+			mockService := mockservice.NewMockService(t)
 			tt.mockFn(mockService)
 
 			handler := NewHandler(mockService)

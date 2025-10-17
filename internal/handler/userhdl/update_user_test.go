@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"meek/internal/domain"
-	"meek/mock/usersvc"
+	"meek/mock/mockservice"
 )
 
 func TestHandler_UpdateUser(t *testing.T) {
@@ -24,7 +24,7 @@ func TestHandler_UpdateUser(t *testing.T) {
 	tests := []struct {
 		name     string
 		body     any
-		mockFn   func(*usersvc.MockService)
+		mockFn   func(*mockservice.MockService)
 		assertFn func(*testing.T, *httptest.ResponseRecorder)
 	}{
 		{
@@ -33,9 +33,9 @@ func TestHandler_UpdateUser(t *testing.T) {
 				Name:  "Jane Doe",
 				Email: "jane@example.com",
 			},
-			mockFn: func(m *usersvc.MockService) {
+			mockFn: func(m *mockservice.MockService) {
 				user := &domain.User{ID: userID, Name: "Jane Doe", Email: "jane@example.com"}
-				m.On("UpdateUser", ctx, userID, "Jane Doe", "jane@example.com").Return(user, nil)
+				m.EXPECT().UpdateUser(ctx, userID, "Jane Doe", "jane@example.com").Return(user, nil)
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusOK, w.Code)
@@ -50,7 +50,7 @@ func TestHandler_UpdateUser(t *testing.T) {
 		{
 			name: "error - invalid request body",
 			body: "invalid json",
-			mockFn: func(m *usersvc.MockService) {
+			mockFn: func(m *mockservice.MockService) {
 				// No mock expectations as validation fails
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -63,8 +63,8 @@ func TestHandler_UpdateUser(t *testing.T) {
 				Name:  "Jane Doe",
 				Email: "jane@example.com",
 			},
-			mockFn: func(m *usersvc.MockService) {
-				m.On("UpdateUser", ctx, userID, "Jane Doe", "jane@example.com").Return(nil, errors.New("update failed"))
+			mockFn: func(m *mockservice.MockService) {
+				m.EXPECT().UpdateUser(ctx, userID, "Jane Doe", "jane@example.com").Return(nil, errors.New("update failed"))
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusInternalServerError, w.Code)
@@ -79,7 +79,7 @@ func TestHandler_UpdateUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := usersvc.NewMockService(t)
+			mockService := mockservice.NewMockService(t)
 			tt.mockFn(mockService)
 
 			handler := NewHandler(mockService)

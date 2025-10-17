@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"meek/internal/domain"
-	"meek/mock/usersvc"
+	"meek/mock/mockservice"
 )
 
 func TestHandler_CreateUser(t *testing.T) {
@@ -23,7 +23,7 @@ func TestHandler_CreateUser(t *testing.T) {
 	tests := []struct {
 		name     string
 		body     any
-		mockFn   func(*usersvc.MockService)
+		mockFn   func(*mockservice.MockService)
 		assertFn func(*testing.T, *httptest.ResponseRecorder)
 	}{
 		{
@@ -32,9 +32,9 @@ func TestHandler_CreateUser(t *testing.T) {
 				Name:  "John Doe",
 				Email: "john@example.com",
 			},
-			mockFn: func(m *usersvc.MockService) {
+			mockFn: func(m *mockservice.MockService) {
 				user := &domain.User{ID: "1", Name: "John Doe", Email: "john@example.com"}
-				m.On("CreateUser", ctx, "John Doe", "john@example.com").Return(user, nil)
+				m.EXPECT().CreateUser(ctx, "John Doe", "john@example.com").Return(user, nil)
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusCreated, w.Code)
@@ -52,7 +52,7 @@ func TestHandler_CreateUser(t *testing.T) {
 				"name": "John Doe",
 				// missing email
 			},
-			mockFn: func(m *usersvc.MockService) {
+			mockFn: func(m *mockservice.MockService) {
 				// No mock expectations as validation fails before service call
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
@@ -65,8 +65,8 @@ func TestHandler_CreateUser(t *testing.T) {
 				Name:  "John Doe",
 				Email: "john@example.com",
 			},
-			mockFn: func(m *usersvc.MockService) {
-				m.On("CreateUser", ctx, "John Doe", "john@example.com").Return(nil, errors.New("database error"))
+			mockFn: func(m *mockservice.MockService) {
+				m.EXPECT().CreateUser(ctx, "John Doe", "john@example.com").Return(nil, errors.New("database error"))
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusInternalServerError, w.Code)
@@ -81,7 +81,7 @@ func TestHandler_CreateUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := usersvc.NewMockService(t)
+			mockService := mockservice.NewMockService(t)
 			tt.mockFn(mockService)
 
 			handler := NewHandler(mockService)

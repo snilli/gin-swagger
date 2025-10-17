@@ -1,11 +1,16 @@
-all: true
-dir: mock
-filename: '{{.InterfaceName}}.go'
-formatter: goimports
-log-level: info
-inpackage: false
-recursive: true
 packages:
-  meek/internal/port:
+  meek/internal/port/service:
     config:
+      all: true
       recursive: true
+      dir: "mock/mockservice"
+      pkgname: "mockservice"
+      filename: "{{.InterfaceName | lower}}.go"
+
+  meek/internal/port/repository:
+    config:
+      all: true
+      recursive: true
+      dir: "mock/mockrepository"
+      pkgname: "mockrepository"
+      filename: "{{.InterfaceName | lower}}.go"

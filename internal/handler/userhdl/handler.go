@@ -1,6 +1,6 @@
 package userhdl
 
-import "meek/internal/port/usersvc"
+import "meek/internal/port/service/usersvc"
 
 // Handler handles user-related HTTP requests
 type Handler struct {

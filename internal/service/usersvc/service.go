@@ -1,6 +1,6 @@
 package usersvc
 
-import port "meek/internal/port/usersvc"
+import port "meek/internal/port/service/usersvc"
 
 // Service implements port.Service interface
 type Service struct {

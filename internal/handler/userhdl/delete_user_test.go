@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
-	"meek/mock/usersvc"
+	"meek/mock/mockservice"
 )
 
 func TestHandler_DeleteUser(t *testing.T) {
@@ -21,13 +21,13 @@ func TestHandler_DeleteUser(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		mockFn   func(*usersvc.MockService)
+		mockFn   func(*mockservice.MockService)
 		assertFn func(*testing.T, *httptest.ResponseRecorder)
 	}{
 		{
 			name: "success - deletes user",
-			mockFn: func(m *usersvc.MockService) {
-				m.On("DeleteUser", ctx, userID).Return(nil)
+			mockFn: func(m *mockservice.MockService) {
+				m.EXPECT().DeleteUser(ctx, userID).Return(nil)
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusNoContent, w.Code)
@@ -35,8 +35,8 @@ func TestHandler_DeleteUser(t *testing.T) {
 		},
 		{
 			name: "error - service returns error",
-			mockFn: func(m *usersvc.MockService) {
-				m.On("DeleteUser", ctx, userID).Return(errors.New("delete failed"))
+			mockFn: func(m *mockservice.MockService) {
+				m.EXPECT().DeleteUser(ctx, userID).Return(errors.New("delete failed"))
 			},
 			assertFn: func(t *testing.T, w *httptest.ResponseRecorder) {
 				assert.Equal(t, http.StatusInternalServerError, w.Code)
@@ -51,7 +51,7 @@ func TestHandler_DeleteUser(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := usersvc.NewMockService(t)
+			mockService := mockservice.NewMockService(t)
 			tt.mockFn(mockService)
 
 			handler := NewHandler(mockService)
