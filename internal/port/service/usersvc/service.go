@@ -3,7 +3,7 @@ package usersvc
 import (
 	"context"
 
-	"meek/internal/domain"
+	"gin-swagger-api/internal/domain"
 )
 
 // Service defines the interface for user business logic

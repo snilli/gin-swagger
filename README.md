@@ -1,4 +1,4 @@
-# Meek API
+# Gin Swagger API
 
 A production-ready REST API template built with Go, following Clean Architecture and Hexagonal Architecture patterns.
 
@@ -23,7 +23,7 @@ A production-ready REST API template built with Go, following Clean Architecture
 ```bash
 # Clone the repository
 git clone <your-repo-url>
-cd meek
+cd gin-swagger-api
 
 # Install dependencies
 go mod download
@@ -72,19 +72,39 @@ The server will start on `http://localhost:8081`
 
 ## Testing
 
+This project uses [Ginkgo](https://onsi.github.io/ginkgo/) (BDD testing framework) with [Gomega](https://onsi.github.io/gomega/) matchers.
+
+### Running Tests
+
 ```bash
-# Run tests with Ginkgo (recommended)
-make ginkgo
+# Run all tests (uses Ginkgo CLI by default)
+make test
 
-# Or run Ginkgo directly
-ginkgo run --randomize-all --race --cover -r
+# Run tests with verbose output
+make test-verbose
 
-# Watch mode for continuous testing
+# Run tests with race detector
+make test-race
+
+# Generate coverage report (creates coverage.html)
+make test-coverage
+
+# Watch mode for continuous testing (auto-rerun on file changes)
 make ginkgo-watch
 
-# Or use standard go test
-make test
+# Alternative: use standard go test
+make test-go
 ```
+
+### Test Coverage
+
+Current test coverage: **100%** for services and handlers
+
+- **64 test cases** across all packages
+- **Service tests**: ProductService (14), UserService (14)
+- **Handler tests**: UserHandler (12), ProductHandler (12), OrderHandler (12)
+- All tests use mocks for isolation
+- BDD style tests with clear Given-When-Then structure
 
 ## API Documentation
 

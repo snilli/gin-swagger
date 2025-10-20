@@ -1,10 +1,14 @@
-.PHONY: run build swagger test ginkgo ginkgo-watch mock clean dev
+.PHONY: run build swagger test test-verbose test-coverage test-watch clean mock
+
+# Build tags for Sonic JSON (faster than standard library)
+BUILD_TAGS = -tags=sonic
 
 run:
-	go run cmd/main.go
+	go run $(BUILD_TAGS) cmd/main.go
 
 build:
-	go build -o bin/meek cmd/main.go
+	mkdir -p bin
+	go build $(BUILD_TAGS) -o bin/gin-swagger-api cmd/main.go
 
 swagger:
 	swag init -g cmd/main.go
@@ -13,15 +17,18 @@ mock:
 	mockery
 
 test:
-	go test -v -cover ./...
+	ginkgo run --randomize-all --cover -r
 
-ginkgo:
-	ginkgo run --randomize-all --race --cover -r
+test-verbose:
+	ginkgo run --randomize-all --cover -r -v
 
-ginkgo-watch:
+test-coverage:
+	ginkgo run --randomize-all --cover -r --cover-profile=coverage.out
+	go tool cover -html=coverage.out -o coverage.html
+
+test-watch:
 	ginkgo watch -r
 
 clean:
-	rm -rf bin/ docs/ mock/
+	rm -rf bin/ docs/ coverage.out coverage.html
 
-dev: swagger run

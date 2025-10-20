@@ -1,6 +1,6 @@
 package userhdl
 
-import "meek/internal/domain"
+import "gin-swagger-api/internal/domain"
 
 // UserResponse represents the API response for a user
 type UserResponse struct {

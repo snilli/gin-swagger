@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestUserhdl(t *testing.T) {
+func TestUserHdl(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Userhdl Suite")
+	RunSpecs(t, "UserHdl Suite")
 }

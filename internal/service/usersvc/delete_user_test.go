@@ -2,40 +2,66 @@ package usersvc_test
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	portusersvc "meek/internal/port/service/usersvc"
-	"meek/internal/service/usersvc"
+	portusersvc "gin-swagger-api/internal/port/service/usersvc"
+	"gin-swagger-api/internal/service/usersvc"
+	mockuserrepo "gin-swagger-api/mock/repository/userrepo"
 )
 
 var _ = Describe("UserService DeleteUser", func() {
 	var (
-		service portusersvc.Service
-		ctx     context.Context
+		mockRepo *mockuserrepo.MockRepository
+		service  portusersvc.Service
+		ctx      context.Context
 	)
 
 	BeforeEach(func() {
-		service = usersvc.New()
+		mockRepo = mockuserrepo.NewMockRepository(GinkgoT())
+		service = usersvc.New(mockRepo)
 		ctx = context.Background()
 	})
 
 	Describe("DeleteUser", func() {
-		Context("when deleting an existing user", func() {
-			It("should delete user successfully", func() {
-				userID := "123"
+		It("should delete user successfully when repository succeeds", func() {
+			userID := "1"
+			userIDInt, _ := strconv.Atoi(userID)
 
-				err := service.DeleteUser(ctx, userID)
+			mockRepo.EXPECT().
+				Delete(ctx, userIDInt).
+				Return(nil).
+				Once()
 
-				Expect(err).ToNot(HaveOccurred())
-			})
+			err := service.DeleteUser(ctx, userID)
 
-			It("should return no error for valid user ID", func() {
-				err := service.DeleteUser(ctx, "456")
+			Expect(err).ToNot(HaveOccurred())
+		})
 
-				Expect(err).ToNot(HaveOccurred())
-			})
+		It("should return error when repository fails", func() {
+			expectedError := errors.New("user not found")
+			userID := "999"
+			userIDInt, _ := strconv.Atoi(userID)
+
+			mockRepo.EXPECT().
+				Delete(ctx, userIDInt).
+				Return(expectedError).
+				Once()
+
+			err := service.DeleteUser(ctx, userID)
+
+			Expect(err).To(MatchError(expectedError))
+		})
+
+		It("should return error when user ID is invalid", func() {
+			userID := "invalid"
+
+			err := service.DeleteUser(ctx, userID)
+
+			Expect(err).To(HaveOccurred())
 		})
 	})
 })

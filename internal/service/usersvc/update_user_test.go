@@ -2,49 +2,79 @@ package usersvc_test
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"meek/internal/domain"
-	portusersvc "meek/internal/port/service/usersvc"
-	"meek/internal/service/usersvc"
+	"gin-swagger-api/internal/domain"
+	portusersvc "gin-swagger-api/internal/port/service/usersvc"
+	"gin-swagger-api/internal/service/usersvc"
+	mockuserrepo "gin-swagger-api/mock/repository/userrepo"
 )
 
 var _ = Describe("UserService UpdateUser", func() {
 	var (
-		service portusersvc.Service
-		ctx     context.Context
+		mockRepo *mockuserrepo.MockRepository
+		service  portusersvc.Service
+		ctx      context.Context
 	)
 
 	BeforeEach(func() {
-		service = usersvc.New()
+		mockRepo = mockuserrepo.NewMockRepository(GinkgoT())
+		service = usersvc.New(mockRepo)
 		ctx = context.Background()
 	})
 
 	Describe("UpdateUser", func() {
-		Context("when updating an existing user", func() {
-			It("should update user successfully", func() {
-				userID := "123"
+		It("should update user successfully when repository succeeds", func() {
+			expectedUser := &domain.User{
+				ID:    "1",
+				Name:  "Jane Updated",
+				Email: "jane.updated@example.com",
+			}
 
-				user, err := service.UpdateUser(ctx, userID, "Jane Updated", "jane.updated@example.com")
+			userID := "1"
+			userIDInt, _ := strconv.Atoi(userID)
 
-				Expect(err).ToNot(HaveOccurred())
-				Expect(user).ToNot(BeNil())
-				Expect(user.ID).To(Equal(userID))
-				Expect(user.Name).To(Equal("Jane Updated"))
-				Expect(user.Email).To(Equal("jane.updated@example.com"))
-			})
+			mockRepo.EXPECT().
+				Update(ctx, userIDInt, "Jane Updated", "jane.updated@example.com").
+				Return(expectedUser, nil).
+				Once()
 
-			It("should return updated user with correct structure", func() {
-				userID := "123"
+			user, err := service.UpdateUser(ctx, userID, "Jane Updated", "jane.updated@example.com")
 
-				user, err := service.UpdateUser(ctx, userID, "New Name", "new@example.com")
+			Expect(err).ToNot(HaveOccurred())
+			Expect(*user).To(Equal(*expectedUser))
+			Expect(user.ID).To(Equal("1"))
+			Expect(user.Name).To(Equal("Jane Updated"))
+			Expect(user.Email).To(Equal("jane.updated@example.com"))
+		})
 
-				Expect(err).ToNot(HaveOccurred())
-				Expect(user).To(BeAssignableToTypeOf(&domain.User{}))
-				Expect(user.ID).To(Equal(userID))
-			})
+		It("should return error when repository fails", func() {
+			expectedError := errors.New("user not found")
+			userID := "999"
+			userIDInt, _ := strconv.Atoi(userID)
+
+			mockRepo.EXPECT().
+				Update(ctx, userIDInt, "Jane Updated", "jane.updated@example.com").
+				Return(nil, expectedError).
+				Once()
+
+			user, err := service.UpdateUser(ctx, userID, "Jane Updated", "jane.updated@example.com")
+
+			Expect(err).To(MatchError(expectedError))
+			Expect(user).To(BeNil())
+		})
+
+		It("should return error when user ID is invalid", func() {
+			userID := "invalid"
+
+			user, err := service.UpdateUser(ctx, userID, "New Name", "new@example.com")
+
+			Expect(err).To(HaveOccurred())
+			Expect(user).To(BeNil())
 		})
 	})
 })

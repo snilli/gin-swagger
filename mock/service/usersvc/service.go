@@ -2,11 +2,11 @@
 // github.com/vektra/mockery
 // template: testify
 
-package mockservice
+package mockusersvc
 
 import (
 	"context"
-	"meek/internal/domain"
+	"gin-swagger-api/internal/domain"
 
 	mock "github.com/stretchr/testify/mock"
 )

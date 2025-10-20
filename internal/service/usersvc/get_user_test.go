@@ -2,51 +2,79 @@ package usersvc_test
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"meek/internal/domain"
-	portusersvc "meek/internal/port/service/usersvc"
-	"meek/internal/service/usersvc"
+	"gin-swagger-api/internal/domain"
+	portusersvc "gin-swagger-api/internal/port/service/usersvc"
+	"gin-swagger-api/internal/service/usersvc"
+	mockuserrepo "gin-swagger-api/mock/repository/userrepo"
 )
 
 var _ = Describe("UserService GetUser", func() {
 	var (
-		service portusersvc.Service
-		ctx     context.Context
+		mockRepo *mockuserrepo.MockRepository
+		service  portusersvc.Service
+		ctx      context.Context
 	)
 
 	BeforeEach(func() {
-		service = usersvc.New()
+		mockRepo = mockuserrepo.NewMockRepository(GinkgoT())
+		service = usersvc.New(mockRepo)
 		ctx = context.Background()
 	})
 
 	Describe("GetUser", func() {
-		Context("when retrieving an existing user", func() {
-			It("should return the user successfully", func() {
-				userID := "123"
+		It("should return user successfully when repository succeeds", func() {
+			expectedUser := &domain.User{
+				ID:    "1",
+				Name:  "John Doe",
+				Email: "john@example.com",
+			}
 
-				user, err := service.GetUser(ctx, userID)
+			userID := "1"
+			userIDInt, _ := strconv.Atoi(userID)
 
-				Expect(err).ToNot(HaveOccurred())
-				Expect(user).ToNot(BeNil())
-				Expect(user.ID).To(Equal(userID))
-				Expect(user.Name).To(Equal("John Doe"))
-				Expect(user.Email).To(Equal("john@example.com"))
-			})
+			mockRepo.EXPECT().
+				GetByID(ctx, userIDInt).
+				Return(expectedUser, nil).
+				Once()
 
-			It("should return correct user data structure", func() {
-				userID := "123"
+			user, err := service.GetUser(ctx, userID)
 
-				user, err := service.GetUser(ctx, userID)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(*user).To(Equal(*expectedUser))
+			Expect(user.ID).To(Equal("1"))
+			Expect(user.Name).To(Equal("John Doe"))
+			Expect(user.Email).To(Equal("john@example.com"))
+		})
 
-				Expect(err).ToNot(HaveOccurred())
-				Expect(user).To(BeAssignableToTypeOf(&domain.User{}))
-				Expect(user.ID).ToNot(BeEmpty())
-				Expect(user.Name).ToNot(BeEmpty())
-				Expect(user.Email).ToNot(BeEmpty())
-			})
+		It("should return error when repository fails", func() {
+			expectedError := errors.New("user not found")
+			userID := "999"
+			userIDInt, _ := strconv.Atoi(userID)
+
+			mockRepo.EXPECT().
+				GetByID(ctx, userIDInt).
+				Return(nil, expectedError).
+				Once()
+
+			user, err := service.GetUser(ctx, userID)
+
+			Expect(err).To(MatchError(expectedError))
+			Expect(user).To(BeNil())
+		})
+
+		It("should return error when user ID is invalid", func() {
+			userID := "invalid"
+
+			user, err := service.GetUser(ctx, userID)
+
+			Expect(err).To(HaveOccurred())
+			Expect(user).To(BeNil())
 		})
 	})
 })

@@ -2,12 +2,17 @@ package usersvc
 
 import (
 	"context"
+	"strconv"
 
-	"meek/internal/domain"
+	"gin-swagger-api/internal/domain"
 )
 
 func (s *Service) GetUser(ctx context.Context, id string) (*domain.User, error) {
-	// TODO: Replace with actual repository call
-	user := &domain.User{ID: id, Name: "John Doe", Email: "john@example.com"}
-	return user, nil
+	// Convert string ID to int
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.userRepo.GetByID(ctx, intID)
 }

@@ -2,16 +2,17 @@ package usersvc
 
 import (
 	"context"
+	"strconv"
 
-	"meek/internal/domain"
+	"gin-swagger-api/internal/domain"
 )
 
 func (s *Service) UpdateUser(ctx context.Context, id, name, email string) (*domain.User, error) {
-	// TODO: Replace with actual repository call
-	user := &domain.User{
-		ID:    id,
-		Name:  name,
-		Email: email,
+	// Convert string ID to int
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return nil, err
 	}
-	return user, nil
+
+	return s.userRepo.Update(ctx, intID, name, email)
 }

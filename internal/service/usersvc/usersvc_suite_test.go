@@ -7,7 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-func TestUsersvc(t *testing.T) {
+func TestUserSvc(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Usersvc Suite")
+	RunSpecs(t, "UserSvc Suite")
 }

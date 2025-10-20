@@ -1,5 +1,131 @@
 basePath: /api/v1
 definitions:
+  orderhdl.CreateOrderRequest:
+    properties:
+      product_id:
+        example: 1
+        type: integer
+      quantity:
+        example: 2
+        type: integer
+      status:
+        example: pending
+        type: string
+      total_price:
+        example: 50000
+        type: number
+      user_id:
+        example: 1
+        type: integer
+    required:
+    - product_id
+    - quantity
+    - total_price
+    - user_id
+    type: object
+  orderhdl.ErrorResponse:
+    properties:
+      error:
+        example: error message
+        type: string
+    type: object
+  orderhdl.OrderResponse:
+    properties:
+      id:
+        example: "1"
+        type: string
+      product_id:
+        example: 1
+        type: integer
+      quantity:
+        example: 2
+        type: integer
+      status:
+        example: pending
+        type: string
+      total_price:
+        example: 50000
+        type: number
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  orderhdl.UpdateOrderRequest:
+    properties:
+      product_id:
+        example: 1
+        type: integer
+      quantity:
+        example: 2
+        type: integer
+      status:
+        example: completed
+        type: string
+      total_price:
+        example: 50000
+        type: number
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  producthdl.CreateProductRequest:
+    properties:
+      description:
+        example: Gaming laptop
+        type: string
+      name:
+        example: Laptop
+        type: string
+      price:
+        example: 25000.5
+        type: number
+      stock:
+        example: 10
+        minimum: 0
+        type: integer
+    required:
+    - name
+    - price
+    type: object
+  producthdl.ErrorResponse:
+    properties:
+      error:
+        example: error message
+        type: string
+    type: object
+  producthdl.ProductResponse:
+    properties:
+      description:
+        example: Gaming laptop
+        type: string
+      id:
+        example: "1"
+        type: string
+      name:
+        example: Laptop
+        type: string
+      price:
+        example: 25000.5
+        type: number
+      stock:
+        example: 10
+        type: integer
+    type: object
+  producthdl.UpdateProductRequest:
+    properties:
+      description:
+        example: Gaming laptop
+        type: string
+      name:
+        example: Laptop
+        type: string
+      price:
+        example: 25000.5
+        type: number
+      stock:
+        example: 10
+        type: integer
+    type: object
   userhdl.CreateUserRequest:
     properties:
       email:
@@ -39,13 +165,13 @@ definitions:
         example: John Doe
         type: string
     type: object
-host: localhost:8080
+host: localhost:8081
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: API documentation for Meek service
+  description: API documentation for Meek service with Ent ORM
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -68,6 +194,292 @@ paths:
       summary: Health check
       tags:
       - health
+  /orders:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all orders
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/orderhdl.OrderResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+      summary: List all orders
+      tags:
+      - orders
+    post:
+      consumes:
+      - application/json
+      description: Create a new order with the provided information
+      parameters:
+      - description: Order information
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/orderhdl.CreateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/orderhdl.OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+      summary: Create a new order
+      tags:
+      - orders
+  /orders/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an order by ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+      summary: Delete an order
+      tags:
+      - orders
+    get:
+      consumes:
+      - application/json
+      description: Get an order by its ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/orderhdl.OrderResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+      summary: Get order by ID
+      tags:
+      - orders
+    put:
+      consumes:
+      - application/json
+      description: Update an order's information by ID
+      parameters:
+      - description: Order ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Order information
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/orderhdl.UpdateOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/orderhdl.OrderResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/orderhdl.ErrorResponse'
+      summary: Update an order
+      tags:
+      - orders
+  /products:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all products
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/producthdl.ProductResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+      summary: List all products
+      tags:
+      - products
+    post:
+      consumes:
+      - application/json
+      description: Create a new product with the provided information
+      parameters:
+      - description: Product information
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/producthdl.CreateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/producthdl.ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+      summary: Create a new product
+      tags:
+      - products
+  /products/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a product by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+      summary: Delete a product
+      tags:
+      - products
+    get:
+      consumes:
+      - application/json
+      description: Get a product by its ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/producthdl.ProductResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+      summary: Get product by ID
+      tags:
+      - products
+    put:
+      consumes:
+      - application/json
+      description: Update a product's information by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Product information
+        in: body
+        name: product
+        required: true
+        schema:
+          $ref: '#/definitions/producthdl.UpdateProductRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/producthdl.ProductResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/producthdl.ErrorResponse'
+      summary: Update a product
+      tags:
+      - products
   /users:
     get:
       description: Get all users from the system

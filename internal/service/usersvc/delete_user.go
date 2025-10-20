@@ -1,8 +1,16 @@
 package usersvc
 
-import "context"
+import (
+	"context"
+	"strconv"
+)
 
 func (s *Service) DeleteUser(ctx context.Context, id string) error {
-	// TODO: Replace with actual repository call
-	return nil
+	// Convert string ID to int
+	intID, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
+	return s.userRepo.Delete(ctx, intID)
 }

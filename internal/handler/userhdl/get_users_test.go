@@ -11,21 +11,21 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"meek/internal/domain"
-	"meek/internal/handler/userhdl"
-	"meek/mock/mockservice"
+	"gin-swagger-api/internal/domain"
+	"gin-swagger-api/internal/handler/userhdl"
+	mockusersvc "gin-swagger-api/mock/service/usersvc"
 )
 
 var _ = Describe("Handler GetUsers", func() {
 	var (
-		mockService *mockservice.MockService
+		mockService *mockusersvc.MockService
 		handler     *userhdl.Handler
 		ctx         context.Context
 	)
 
 	BeforeEach(func() {
 		gin.SetMode(gin.TestMode)
-		mockService = mockservice.NewMockService(GinkgoT())
+		mockService = mockusersvc.NewMockService(GinkgoT())
 		handler = userhdl.NewHandler(mockService)
 		ctx = context.Background()
 	})
