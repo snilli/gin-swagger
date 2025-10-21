@@ -12,7 +12,7 @@ import (
 	"gin-swagger-api/internal/repository/userrepo"
 	"gin-swagger-api/internal/testutil"
 
-	ormprovider "github.com/example/orm-provider-api"
+	"github.com/example/ormprovider"
 )
 
 var _ = Describe("UserRepository", func() {

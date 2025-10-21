@@ -8,19 +8,19 @@ import (
 	. "github.com/onsi/gomega"
 
 	"gin-swagger-api/internal/domain"
-	"gin-swagger-api/internal/repository/orderrepo"
 	portorderrepo "gin-swagger-api/internal/port/repository/orderrepo"
+	"gin-swagger-api/internal/repository/orderrepo"
 	"gin-swagger-api/internal/testutil"
 
-	ormprovider "github.com/example/orm-provider-api"
+	"github.com/example/ormprovider"
 )
 
 var _ = Describe("OrderRepository", func() {
 	var (
-		repo      portorderrepo.Repository
-		db        *ormprovider.Client
-		ctx       context.Context
-		orderID   int
+		repo          portorderrepo.Repository
+		db            *ormprovider.Client
+		ctx           context.Context
+		orderID       int
 		testUserID    int
 		testProductID int
 	)

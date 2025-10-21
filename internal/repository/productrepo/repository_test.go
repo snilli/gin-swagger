@@ -8,11 +8,11 @@ import (
 	. "github.com/onsi/gomega"
 
 	"gin-swagger-api/internal/domain"
-	"gin-swagger-api/internal/repository/productrepo"
 	portproductrepo "gin-swagger-api/internal/port/repository/productrepo"
+	"gin-swagger-api/internal/repository/productrepo"
 	"gin-swagger-api/internal/testutil"
 
-	ormprovider "github.com/example/orm-provider-api"
+	"github.com/example/ormprovider"
 )
 
 var _ = Describe("ProductRepository", func() {

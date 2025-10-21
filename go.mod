@@ -3,20 +3,23 @@ module gin-swagger-api
 go 1.25.3
 
 require (
-	github.com/example/orm-provider-api v0.0.0
+	github.com/example/ormprovider v0.0.0
 	github.com/gin-contrib/graceful v1.1.4
 	github.com/gin-gonic/gin v1.11.0
+	github.com/joho/godotenv v1.5.1
 	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/onsi/ginkgo/v2 v2.26.0
 	github.com/onsi/gomega v1.38.2
+	github.com/rs/zerolog v1.34.0
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.1
 	github.com/swaggo/swag v1.16.6
-	go.uber.org/mock v0.6.0
+	go-simpler.org/env v0.12.0
+	go.uber.org/fx v1.24.0
 )
 
-replace github.com/example/orm-provider-api => ../orm-provider-api
+replace github.com/example/ormprovider => ../ormprovider
 
 require (
 	ariga.io/atlas v0.32.1-0.20250325101103-175b25e1c1b9 // indirect
@@ -55,7 +58,6 @@ require (
 	github.com/google/pprof v0.0.0-20251007162407-5df77e3f7d1d // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.18.1 // indirect
-	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -69,14 +71,16 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
 	github.com/quic-go/quic-go v0.55.0 // indirect
-	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/zclconf/go-cty v1.14.4 // indirect
 	github.com/zclconf/go-cty-yaml v1.1.0 // indirect
-	go-simpler.org/env v0.12.0 // indirect
 	go.uber.org/automaxprocs v1.6.0 // indirect
+	go.uber.org/dig v1.19.0 // indirect
+	go.uber.org/mock v0.6.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
+	go.uber.org/zap v1.26.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect

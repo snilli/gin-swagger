@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	ormprovider "github.com/example/orm-provider-api"
+	"github.com/example/ormprovider"
 	"github.com/gin-contrib/graceful"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"go.uber.org/fx"
 
 	"gin-swagger-api/config"
 	_ "gin-swagger-api/docs"
@@ -16,6 +17,12 @@ import (
 	"gin-swagger-api/internal/handler/orderhdl"
 	"gin-swagger-api/internal/handler/producthdl"
 	"gin-swagger-api/internal/handler/userhdl"
+	portorderrepo "gin-swagger-api/internal/port/repository/orderrepo"
+	portproductrepo "gin-swagger-api/internal/port/repository/productrepo"
+	portuserrepo "gin-swagger-api/internal/port/repository/userrepo"
+	portordersvc "gin-swagger-api/internal/port/service/ordersvc"
+	portproductsvc "gin-swagger-api/internal/port/service/productsvc"
+	portusersvc "gin-swagger-api/internal/port/service/usersvc"
 	"gin-swagger-api/internal/repository/orderrepo"
 	"gin-swagger-api/internal/repository/productrepo"
 	"gin-swagger-api/internal/repository/userrepo"
@@ -40,9 +47,66 @@ import (
 // @BasePath /api/v1
 // @schemes http https
 func main() {
+	fx.New(
+		// Provide config
+		fx.Provide(provideConfig),
+
+		// Provide database
+		fx.Provide(provideDatabase),
+
+		// Provide repositories
+		fx.Provide(
+			fx.Annotate(
+				userrepo.New,
+				fx.As(new(portuserrepo.Repository)),
+			),
+			fx.Annotate(
+				productrepo.New,
+				fx.As(new(portproductrepo.Repository)),
+			),
+			fx.Annotate(
+				orderrepo.New,
+				fx.As(new(portorderrepo.Repository)),
+			),
+		),
+
+		// Provide services
+		fx.Provide(
+			fx.Annotate(
+				usersvc.New,
+				fx.As(new(portusersvc.Service)),
+			),
+			fx.Annotate(
+				productsvc.New,
+				fx.As(new(portproductsvc.Service)),
+			),
+			fx.Annotate(
+				ordersvc.New,
+				fx.As(new(portordersvc.Service)),
+			),
+		),
+
+		// Provide handlers
+		fx.Provide(
+			handler.NewSystemHandler,
+			userhdl.NewHandler,
+			producthdl.NewHandler,
+			orderhdl.NewHandler,
+		),
+
+		// Provide Gin engine
+		fx.Provide(provideGinEngine),
+
+		// Invoke server startup
+		fx.Invoke(runServer),
+	).Run()
+}
+
+// provideConfig loads and sets up configuration
+func provideConfig() (*config.Config, error) {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to load config")
+		return nil, fmt.Errorf("failed to load config: %w", err)
 	}
 
 	cfg.SetupLogger()
@@ -54,6 +118,11 @@ func main() {
 
 	gin.SetMode(cfg.ServerMode)
 
+	return cfg, nil
+}
+
+// provideDatabase creates database connection
+func provideDatabase(lc fx.Lifecycle, cfg *config.Config) (*ormprovider.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -67,32 +136,44 @@ func main() {
 	})
 
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to connect to database")
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
-	defer db.Close()
 
 	log.Info().
 		Str("host", cfg.DatabaseHost).
 		Str("database", cfg.DatabaseName).
 		Msg("Connected to database successfully")
 
+	// Register lifecycle hooks
+	lc.Append(fx.Hook{
+		OnStop: func(ctx context.Context) error {
+			log.Info().Msg("Closing database connection")
+			return db.Close()
+		},
+	})
+
+	return db, nil
+}
+
+// provideGinEngine creates and configures Gin engine
+func provideGinEngine() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	return r
+}
 
-	userRepo := userrepo.New(db)
-	productRepo := productrepo.New(db)
-	orderRepo := orderrepo.New(db)
-
-	userService := usersvc.New(userRepo)
-	productService := productsvc.New(productRepo)
-	orderService := ordersvc.New(orderRepo)
-
-	systemHandler := handler.NewSystemHandler(cfg)
-	userHandler := userhdl.NewHandler(userService)
-	productHandler := producthdl.NewHandler(productService)
-	orderHandler := orderhdl.NewHandler(orderService)
-
+// runServer sets up routes and starts the server
+func runServer(
+	lc fx.Lifecycle,
+	cfg *config.Config,
+	r *gin.Engine,
+	systemHandler *handler.SystemHandler,
+	userHandler *userhdl.Handler,
+	productHandler *producthdl.Handler,
+	orderHandler *orderhdl.Handler,
+) {
+	// Register routes
 	systemHandler.RegisterRoutes(r)
 
 	v1 := r.Group("/api/v1")
@@ -111,10 +192,19 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to create graceful server")
 	}
 
-	serverCtx := context.Background()
-	if err := srv.RunWithContext(serverCtx); err != nil {
-		log.Fatal().Err(err).Msg("Server error")
-	}
-
-	log.Info().Msg("Server shutdown gracefully")
+	// Register lifecycle hooks
+	lc.Append(fx.Hook{
+		OnStart: func(ctx context.Context) error {
+			go func() {
+				if err := srv.RunWithContext(context.Background()); err != nil {
+					log.Error().Err(err).Msg("Server error")
+				}
+			}()
+			return nil
+		},
+		OnStop: func(ctx context.Context) error {
+			log.Info().Msg("Server shutdown gracefully")
+			return srv.Shutdown(ctx)
+		},
+	})
 }
