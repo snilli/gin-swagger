@@ -7,7 +7,7 @@ import (
 	"gin-swagger-api/internal/domain"
 	portproductrepo "gin-swagger-api/internal/port/repository/productrepo"
 
-	"github.com/example/ormprovider"
+	"github.com/snilli/ormprovider"
 )
 
 // Repository implements the product repository interface

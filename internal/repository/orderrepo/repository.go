@@ -7,7 +7,7 @@ import (
 	"gin-swagger-api/internal/domain"
 	portorderrepo "gin-swagger-api/internal/port/repository/orderrepo"
 
-	"github.com/example/ormprovider"
+	"github.com/snilli/ormprovider"
 )
 
 // Repository implements the order repository interface

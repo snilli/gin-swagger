@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/example/ormprovider"
 	"github.com/gin-contrib/graceful"
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog/log"
+	"github.com/snilli/ormprovider"
 	"go.uber.org/fx"
 
 	"gin-swagger-api/config"

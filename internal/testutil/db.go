@@ -3,9 +3,9 @@ package testutil
 import (
 	"context"
 
-	"github.com/example/ormprovider"
-	"github.com/example/ormprovider/ent/enttest"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/snilli/ormprovider"
+	"github.com/snilli/ormprovider/ent/enttest"
 )
 
 // TestingT is a minimal interface for testing that matches both testing.TB and Ginkgo's interface

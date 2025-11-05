@@ -1,14 +1,27 @@
-.PHONY: run build swagger test test-verbose test-coverage test-watch clean mock
+.PHONY: run run-graphql build build-graphql build-all swagger test test-verbose test-coverage test-watch clean mock orm local-orm help
 
 # Build tags for Sonic JSON (faster than standard library)
 BUILD_TAGS = -tags=sonic
 
-run:
-	go run $(BUILD_TAGS) cmd/main.go
+# ORM Provider settings
+ORM_REMOTE = github.com/snilli/ormprovider@latest
+ORM_LOCAL = ../ormprovider
 
-build:
+# Run REST API server
+run:
+	go run $(BUILD_TAGS) cmd/api/main.go
+
+# Run GraphQL server
+run-graphql:
+	go run $(BUILD_TAGS) cmd/graphql/main.go
+
+# Build GraphQL server
+build-graphql:
 	mkdir -p bin
-	go build $(BUILD_TAGS) -o bin/gin-swagger-api cmd/main.go
+	go build $(BUILD_TAGS) -o bin/graphql-server cmd/graphql/main.go
+
+# Build both servers
+build-all: build build-graphql
 
 swagger:
 	swag init -g cmd/main.go
@@ -31,4 +44,13 @@ test-watch:
 
 clean:
 	rm -rf bin/ docs/ coverage.out coverage.html
+
+orm:
+	go mod edit -dropreplace github.com/snilli/ormprovider || true
+	go get $(ORM_REMOTE)
+	go mod tidy
+
+local-orm:
+	go mod edit -replace github.com/snilli/ormprovider=$(ORM_LOCAL)
+	go mod tidy
 
